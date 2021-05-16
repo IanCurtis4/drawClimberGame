@@ -13,7 +13,7 @@ public class DrawLine : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     private LineRenderer _lineRenderer;
 
     [SerializeField]
-    private Material _lineMat;
+    private Material _lineMaterial;
 
     private int _currentIndex;
 
@@ -25,46 +25,31 @@ public class DrawLine : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private Transform _lastInstantiatedCollider;
 
+    [SerializeField]
+    private float _zScaleModifier;
+
+    [SerializeField]
+    private float _zPositionModifier;
+
+    [SerializeField]
+    private float _distanceBetweenPrefabs;
+
+    private Transform _parent;
+
     /**
      *  
      */
     private bool _drawingStarted;
 
-    public void OnPointerDown(PointerEventData data)
-    {
-        
-        _drawingStarted = true;
-        _mousePosition = Input.mousePosition;
+    public void OnPointerDown(PointerEventData data) => StartDrawing();
 
-        _lineRenderer = _lineGameObject.AddComponent<LineRenderer>();
-
-        _lineRenderer.startWidth = 0.2f;
-
-        _lineRenderer.material = _lineMat;
-
-    }
-
-    public void OnPointerUp(PointerEventData data)
-    {
-        _drawingStarted = false;
-
-        _lineGameObject.AddComponent<Rigidbody>();
-
-        _lineGameObject.GetComponent<Rigidbody>().useGravity = false;
-
-        _lineRenderer.useWorldSpace = false;
-
-        Destroy(_lastInstantiatedCollider.gameObject);
-
-        Start();
-
-        _currentIndex = 0;
-    }
+    public void OnPointerUp(PointerEventData data) => StopDrawing();
 
     // Start is called before the first frame update
     void Start()
     {
         _lineGameObject = new GameObject();
+        _parent = gameObject.transform.parent;
     }
 
     // Update is called once per frame
@@ -76,7 +61,7 @@ public class DrawLine : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             // Vector3 Distance = _mousePosition - Input.mousePosition;
             // float DistanceSquareMagnitude = Distance.sqrMagnitude;
 
-            if ((_mousePosition - Input.mousePosition).sqrMagnitude > 1000f)
+            if ((_mousePosition - Input.mousePosition).sqrMagnitude > _distanceBetweenPrefabs)
             {
                 SetLineRendererPos();
 
@@ -92,7 +77,7 @@ public class DrawLine : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
                         _lastInstantiatedCollider.eulerAngles = new Vector3(_lastInstantiatedCollider.rotation.eulerAngles.x, 90, _lastInstantiatedCollider.rotation.eulerAngles.z);
                     }
 
-                    _lastInstantiatedCollider.localScale = new Vector3(_lastInstantiatedCollider.localScale.x, _lastInstantiatedCollider.localScale.y, Vector3.Distance(_lastInstantiatedCollider.position, currentWorldPosition) * 2f);
+                    _lastInstantiatedCollider.localScale = new Vector3(_lastInstantiatedCollider.localScale.x, _lastInstantiatedCollider.localScale.y, Vector3.Distance(_lastInstantiatedCollider.position, currentWorldPosition) * _zScaleModifier);
 
                 }
 
@@ -115,6 +100,38 @@ public class DrawLine : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void SetLineRendererPos()
     {
-        _lineRenderer.SetPosition(_currentIndex, _cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Input.mousePosition.z + 10f)));
+        _lineRenderer.SetPosition(_currentIndex, _cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Input.mousePosition.z + _zPositionModifier)));
+    }
+
+    private void StopDrawing() {
+        
+        _drawingStarted = false;
+
+        _lineGameObject.AddComponent<Rigidbody>();
+
+        _lineGameObject.GetComponent<Rigidbody>().useGravity = false;
+
+        _lineRenderer.useWorldSpace = false;
+
+        Destroy(_lastInstantiatedCollider.gameObject);
+
+        Start();
+
+        _currentIndex = 0;
+    
+    }
+
+    private void StartDrawing() {
+
+        _drawingStarted = true;
+     
+        _mousePosition = Input.mousePosition;
+
+        _lineRenderer = _lineGameObject.AddComponent<LineRenderer>();
+
+        _lineRenderer.startWidth = 0.2f;
+
+        _lineRenderer.material = _lineMaterial;
+    
     }
 }
